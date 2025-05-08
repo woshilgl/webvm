@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define KEY2 5678
-
 struct msgbuf {
     long mtype;
     int choice;
@@ -13,15 +11,18 @@ struct msgbuf {
 
 int main() {
     srand(time(NULL));
-    int msgid = msgget(KEY2, 0666);
+    key_t key = ftok("/tmp", 'B'); // player2.c中改为'B'
+    int msgid = msgget(key, 0666);
     struct msgbuf msg;
 
+    if(msgid == -1) {
+        perror("消息队列连接失败");
+        return 1;
+    }
+
     while(1) {
-        // 等待裁判信号
         msgrcv(msgid, &msg, sizeof(msg.choice), 1, 0);
-        
         if(msg.choice == -1) {
-            // 生成随机选择
             msg.mtype = 2;
             msg.choice = rand() % 3 + 1;
             msgsnd(msgid, &msg, sizeof(msg.choice), 0);
